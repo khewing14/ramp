@@ -22,7 +22,8 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
             throw new Exception("Error: Cannot access database '".
                 $configInfo['dbname'] .  "' using user '" .
                 $configInfo['username'] . "'@'" .
-                $configInfo['host'] . "'.");
+                $configInfo['host'] . " . With password " .
+                $configInfo['password']);
         }
     }
 
@@ -53,6 +54,17 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
 	// read-in settings and setting information.
         $settings = array();
         Zend_Registry::set('rampTableViewingSequences', $settings);
+
+        //create new adapter for zend translate
+        $adapter = new Zend_Translate(array(
+            'adapter' => 'array',
+            'content' => array('test' => 'spanish'),
+            'locale' => 'en'));
+
+        //add the adapter to the registry
+        Zend_Registry::set('Zend_Translate', $adapter);
+
+
     }
 
     /**

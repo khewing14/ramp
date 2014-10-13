@@ -37,6 +37,7 @@ class TableController extends Zend_Controller_Action
     const ANY                   = Ramp_Table_SetTable::ANY;
     const ALL                   = Ramp_Table_SetTable::ALL;
 
+
     /* labels for forms and buttons */
     const VIEW                  = 'View';       // used by Form
     const SEARCH                = "Search";
@@ -46,7 +47,6 @@ class TableController extends Zend_Controller_Action
     const LIST_VIEW             = "List Display";
     const TABLE                 = "Tabular Display";
     const SPLIT_VIEW            = "Split View Display";
-    const ADD                   = "Add New Entry";
     const CLONE_BUTTON          = "Clone This Entry";
     const BLOCK_ENTRY_PREFIX    = "Add ";
     const BLOCK_ENTRY_SUFFIX    = " in a Block";
@@ -137,6 +137,9 @@ class TableController extends Zend_Controller_Action
                 Ramp_Table_TVSFactory::getSequenceOrSetting($seqName);
         }
 
+        $adapter = Zend_Registry::get('Zend_Translate');
+        $this->ADD = $adapter->translate('test');
+
 // $this->_debugging = true;
 
     }
@@ -218,7 +221,7 @@ class TableController extends Zend_Controller_Action
         {
             // Search failed.
             $this->view->errMsgs[] = "No matching results were found.";
-            $this->view->buttonList[] = self::ADD;
+            $this->view->buttonList[] = $this->ADD;
             $this->view->dataEntryForm->populate($data);
         }
     }
@@ -246,7 +249,7 @@ class TableController extends Zend_Controller_Action
                                                           $comparators);
 
                 // Adding new entry based on failed search?
-                if ( $this->_submittedButton == self::ADD )
+                if ( $this->_submittedButton == $this->ADD )
                 {
                     if ( $this->_illegalCallback($setTable) )
                         { return; }
@@ -290,7 +293,7 @@ class TableController extends Zend_Controller_Action
         }
         elseif ( $this->_submittedButton == self::TABLE ||
                  $this->_submittedButton == self::SPLIT_VIEW  ||
-                 $this->_submittedButton == self::ADD ||
+                 $this->_submittedButton == $this->ADD ||
                  $this->_blockAdd($this->_submittedButton) )
         {
             // Go to a different view with the same data set.
@@ -323,7 +326,7 @@ class TableController extends Zend_Controller_Action
         }
         elseif ( $this->_submittedButton == self::LIST_VIEW ||
                  $this->_submittedButton == self::SPLIT_VIEW  ||
-                 $this->_submittedButton == self::ADD ||
+                 $this->_submittedButton == $this->ADD ||
                  $this->_blockAdd($this->_submittedButton) )
         {
             // Go to a different view with the same data set.
@@ -370,7 +373,7 @@ class TableController extends Zend_Controller_Action
         }
         elseif ( $this->_submittedButton == self::LIST_VIEW ||
                  $this->_submittedButton == self::TABLE  ||
-                 $this->_submittedButton == self::ADD ||
+                 $this->_submittedButton == $this->ADD ||
                  $this->_blockAdd($this->_submittedButton) )
         {
             // Go to a different view with the same data set.
@@ -395,7 +398,7 @@ class TableController extends Zend_Controller_Action
 
         // Let the view renderer know the table, buttons, and data form to use.
         $this->_initViewTableInfo($setTable);
-        $buttonList = array(self::EDIT, self::ADD, self::CLONE_BUTTON);
+        $buttonList = array(self::EDIT, $this->ADD, self::CLONE_BUTTON);
         $this->view->buttonList = array_merge($buttonList, 
                     array(self::SEARCH, self::DEL_BUTTON));
                 // array(self::SEARCH, self::DEL_BUTTON, self::DISPLAY_ALL));
@@ -589,7 +592,7 @@ class TableController extends Zend_Controller_Action
         $this->view->buttonList = array(self::SAVE, self::RESET_BUTTON,
                                         self::CANCEL, self::SEARCH);
         $this->view->dataEntryForm = $form =
-                                    $this->_getForm($setTable, self::ADD);
+                                    $this->_getForm($setTable, $this->ADD);
 
         // Is this the initial display or the callback with fields provided?
         if ( $this->_thisIsInitialDisplay() )
@@ -687,7 +690,7 @@ class TableController extends Zend_Controller_Action
             for ( $i = 0; $i < $count; $i++ )
             {
                 $form = $this->view->entryForms[] =
-                    $this->_getForm($entrySetting, self::ADD, true, "_" . $i);
+                    $this->_getForm($entrySetting, $this->ADD, true, "_" . $i);
             }
         }
         else
@@ -921,7 +924,7 @@ class TableController extends Zend_Controller_Action
     protected function _illegalCallback($setTable)
     {
         // Get the appropriate table setting based on the button action.
-        if ( $this->_submittedButton == self::ADD ||
+        if ( $this->_submittedButton == $this->ADD ||
              $this->_submittedButton == self::CLONE_BUTTON ||
              $this->_blockAdd($this->_submittedButton) )
         {
@@ -961,7 +964,7 @@ class TableController extends Zend_Controller_Action
     protected function _multiRecordButtonSet($self_view, $setTable)
     {
         $buttonList = array();
-        $buttonList[] = self::ADD;
+        $buttonList[] = $this->ADD;
         if ( $setTable->supportsBlockEntry() )
             {   $buttonList[] = $this->_makeBlockEntryButton($setTable);    }
         if ( $setTable->supportsBlockEdit() )
@@ -1143,7 +1146,7 @@ class TableController extends Zend_Controller_Action
             self::DISPLAY_ALL => $this->_displayAllView,
             self::LIST_VIEW => $this->_displayAllView,
             self::TABLE => 'table-view', self::SPLIT_VIEW => 'split-view',
-            self::ADD => 'add', self::EDIT => 'record-edit',
+            $this->ADD => 'add', self::EDIT => 'record-edit',
             self::BLOCK_EDIT_LABEL => 'block-edit',
             self::DEL_BUTTON => 'delete');
 
