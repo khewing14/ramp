@@ -35,11 +35,11 @@
 
 -- 1a. CREATE DBA ACCOUNT(S):
 
-CREATE USER 'smartdemodba'@'localhost' IDENTIFIED BY 'smartdbapw';
+CREATE USER 'smartdemodba'@'localhost' IDENTIFIED BY 'kevin';
 
 -- 1b. CREATE WEB-BASED RAMP/SMART ACCESS ACCOUNT:
 
-CREATE USER 'smartdemo'@'localhost' IDENTIFIED BY 'smartdemo_passwd';
+CREATE USER 'smartdemo'@'localhost' IDENTIFIED BY 'kevin';
 
 
 

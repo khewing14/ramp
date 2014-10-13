@@ -41,11 +41,11 @@
 
 -- 1a. CREATE DBA ACCOUNT(S):
 
-CREATE USER 'smartdevdba'@'localhost' IDENTIFIED BY 'smartdbapw';
+CREATE USER 'smartdevdba'@'localhost' IDENTIFIED BY 'kevin';
 
 -- 1b. CREATE WEB-BASED RAMP/SMART ACCESS ACCOUNT:
 
-CREATE USER 'smartdev'@'localhost' IDENTIFIED BY 'smartdev_passwd';
+CREATE USER 'smartdev'@'localhost' IDENTIFIED BY 'kevin';
 
 
 
