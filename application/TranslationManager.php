@@ -2,7 +2,11 @@
 
 class TranslationManager
 {
-    protected function _init($settings, $zendLocale)
+
+    public $settings;
+    public $locale;
+
+    public function __construct($settings, $zendLocale)
     {
         $this->settings = $settings;
         $this->locale = $zendLocale;
