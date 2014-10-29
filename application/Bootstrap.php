@@ -16,6 +16,7 @@
  * @license    http://www.cs.kzoo.edu/ramp/LICENSE.txt   Simplified BSD License
  *
  */
+include 'TranslationManager.php';
 class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
 {
     const ACT_CONTROLLER = Ramp_Controller_KeyParameters::ACT_CONTROLLER;
@@ -63,14 +64,13 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
             // environments within an application (e.g., production vs. 
             // test vs. development environments).
             $rampConfigSettings = $configOptions['ramp'];
+
             Zend_Registry::set('rampConfigSettings', $rampConfigSettings);
         }
-
 	// Register the (currently empty) associated array of
 	// read-in settings and setting information.
         $settings = array();
         Zend_Registry::set('rampTableViewingSequences', $settings);
-
         //create new adapter for zend translate
         $adapter = new Zend_Translate(array(
             'adapter' => 'array',
@@ -79,8 +79,10 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
 
         //add the adapter to the registry
         Zend_Registry::set('Zend_Translate', $adapter);
-
-
+        
+        //create a new translation manager object and put it in the registry
+        $translationManager = new TranslationManager($rampConfigSettings, new Zend_Locale());
+        Zend_Registry::set('translationManager', $translationManager);
     }
 
     /**
