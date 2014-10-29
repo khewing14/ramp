@@ -137,8 +137,8 @@ class Ramp_RegistryFacade
      */
     public function getAclResources()
     {
-        return isset($this->_configs[self::ACL_RESOURCES])
-            ? $this->_configs[self::ACL_RESOURCES] : null;
+        $translator = Zend_Registry::get('translationManager');
+        return $translator->getFilePath(self::ACL_RESOURCES);
     }
 
     /**

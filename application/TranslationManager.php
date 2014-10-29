@@ -14,8 +14,25 @@ class TranslationManager
 
     public function getFilePath($key)
     {
-        return $this->settings[$key] . "/" . $this->locale->getLanguage() . ".ini";
+        $val = $this->settings[$key];
+        if (gettype($val) == "string")
+        {
+            $this->translatePath($val);
+        }
+        if (gettype($val) == "array")
+        {
+            $ret = array();
+            foreach ($val as $path)
+            {
+                array_push($ret, $this->translatePath($path));
+            } 
+            return $ret;
+        }
     } 
+
+    private function translatePath($path) {
+        return $path . "/" . $this->locale->getLanguage() . ".ini";
+    }
 }
 
 ?>
