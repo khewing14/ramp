@@ -74,7 +74,7 @@ class Ramp_RegistryFacade
     /**
      * Class constructor
      *
-     * Creates a singleton object representing the RAMP configuration 
+     * Creates a singleton object representing the RAMP configuration
      * properties in the Zend_Registry.
      */
     protected function __construct()
@@ -95,8 +95,8 @@ class Ramp_RegistryFacade
     }
 
     /**
-     * Gets the authentication type.  (If no authentication type has 
-     * been set in the application.ini file, the default is to use 
+     * Gets the authentication type.  (If no authentication type has
+     * been set in the application.ini file, the default is to use
      * internal authentication.)
      */
     public function getAuthenticationType()
@@ -137,8 +137,8 @@ class Ramp_RegistryFacade
      */
     public function getAclResources()
     {
-        $translator = Zend_Registry::get('translationManager');
-        return $translator->getFilePath(self::ACL_RESOURCES);
+        return isset($this->_configs[self::ACL_RESOURCES])
+            ? $this->_configs[self::ACL_RESOURCES] : null;
     }
 
     /**
@@ -151,7 +151,7 @@ class Ramp_RegistryFacade
     }
 
     /**
-     * Gets an array containing settings that affect the look and feel 
+     * Gets an array containing settings that affect the look and feel
      * of the application.  The array keys are:
      *      'title'
      *      'subtitle'
@@ -185,7 +185,11 @@ class Ramp_RegistryFacade
     public function getMenuDirectory()
     {
         $path = $this->_configs[self::BASE_MENU_DIR];
-        return empty($path) ? self::getSettingsDirectory() : $path;
+        if (isset($this->_configs[self::BASE_MENU_DIR])) {
+            $translator = Zend_Registry::get('translationManager');
+            return $translator->getFilePath(self::BASE_MENU_DIR);
+        }
+        return self::getSettingsDirectory();
     }
 
     /**
@@ -203,7 +207,7 @@ class Ramp_RegistryFacade
     }
 
     /**
-     * Gets the appropriate menu for the given role (or the default menu 
+     * Gets the appropriate menu for the given role (or the default menu
      * if no role-specific menu has been defined for the given role).
      *
      * @param $role  the user's role
@@ -231,9 +235,12 @@ class Ramp_RegistryFacade
      */
     public function getActivitiesDirectory()
     {
-        $path = isset($this->_configs[self::ACTIVITIES_ROOT])
-            ? $this->_configs[self::ACTIVITIES_ROOT] : null;;
-        return empty($path) ? self::getSettingsDirectory() : $path;
+        if(isset($this->_configs[self::ACTIVITIES_ROOT])) {
+            $translator = Zend_Registry::get('translationManager');
+            return $translator->getFilePath(self::ACTIVITIES_ROOT);
+        }
+        // If no activities root specified, return settings directory
+        return self::getSettingsDirectory();
     }
 
     /**
@@ -243,18 +250,14 @@ class Ramp_RegistryFacade
      */
     public function getSettingsDirectory()
     {
-        // Get the settings directory from Zend_Registry.
-        $path = isset($this->_configs[self::SETTINGS_ROOT])
-            ? $this->_configs[self::SETTINGS_ROOT] : null;;
-
-        // If no directory specified, come up with a default instead.
-        if ( empty($path) )
-        {
-            $baseDir = Zend_Controller_Front::getInstance()->getBaseUrl();
-            $path = $baseDir . DIRECTORY_SEPARATOR . 'settings';
+        if (isset($this->_configs[self::SETTINGS_ROOT])) {
+            $translator = Zend_Registry::get('translationManager');
+            return $translator->getFilePath(self::SETTINGS_ROOT);
         }
 
-        return $path;
+        // If no directory specified, come up with a default instead.
+        $baseDir = Zend_Controller_Front::getInstance()->getBaseUrl();
+        return $baseDir . DIRECTORY_SEPARATOR . 'settings';
     }
 
     /**
@@ -309,12 +312,12 @@ class Ramp_RegistryFacade
     }
 
     /**
-     * Returns the given activity name if that file exists, an extended 
+     * Returns the given activity name if that file exists, an extended
      * version of the activity name (built up from the base activity
      * directory and the given file name) if that file exists, or null.
      *
      * @param $filename      the file name (absolute or relative)
-     * @param $directory     the directory in which to look if the 
+     * @param $directory     the directory in which to look if the
      *                          filename is relative
      */
     protected function _buildFilename($filename, $directory)
