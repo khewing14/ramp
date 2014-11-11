@@ -141,6 +141,7 @@ class TableController extends Zend_Controller_Action
                 Ramp_Table_TVSFactory::getSequenceOrSetting($seqName);
         }
 
+        // Load the shared translation adapter from the zend registry
         $this->adapter = Zend_Registry::get('Zend_Translate');
 
         $this->_matchAbbrevs = array(
