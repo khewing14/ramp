@@ -36,7 +36,7 @@ class ReportController extends TableController
     }
 
     /**
-     * Reports always start with a search, from which Display All 
+     * Reports always start with a search, from which Display All
      * Entries is an option.
      *
      */
@@ -46,7 +46,7 @@ class ReportController extends TableController
     }
 
     /**
-     * Executes the search and goes to the appropriate display page.  
+     * Executes the search and goes to the appropriate display page.
      * Only returns if the search failed.
      *
      * @param $setTable   table setting for the table in which to search
@@ -77,7 +77,7 @@ class ReportController extends TableController
     }
 
 
-    // ===> Redefining processSearchCallBack no longer necessary because 
+    // ===> Redefining processSearchCallBack no longer necessary because
     //      now have _displayAllView instance variable?
 
     /**
@@ -99,7 +99,7 @@ class ReportController extends TableController
                 $fieldVals = $form->getFieldValues();
                 $nonNullData = $this->_getFilledFields($fieldVals);
 
-                // Searching for any or all matches. Display based on 
+                // Searching for any or all matches. Display based on
                 // number of results.
                 $this->_executeSearch($setTable, $nonNullData,
                             $form->getComparitors(), $this->_submittedButton);

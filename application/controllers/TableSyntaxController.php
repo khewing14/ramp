@@ -19,8 +19,9 @@
 
 class TableSyntaxController extends Zend_Controller_Action
 {
-    /* Button labels */
+
     const SUBMIT_BUTTON = 'submit';
+    /* Button labels */
     const DO_IT         = 'Check Syntax';
     const CHECK_ANOTHER = 'Check Another Setting';
     const CANCEL        = 'Cancel';
@@ -29,6 +30,7 @@ class TableSyntaxController extends Zend_Controller_Action
     const FILENAME = Ramp_Form_Table_GetSettingName::SETTING_NAME;
 
     protected $_submittedButton;
+    public $adapter;
 
     /**
      * Initializes the attributes for this object as well as some
@@ -38,10 +40,13 @@ class TableSyntaxController extends Zend_Controller_Action
     {
         // Initialize action controller here
         $this->_submittedButton = $this->_getParam(self::SUBMIT_BUTTON);
+
+        // Load the shared translation adapter from the zend registry
+        $this->adapter = Zend_Registry::get('Zend_Translate');
     }
 
     /**
-     * Checks the syntax of a table setting/sequence file chosen by the 
+     * Checks the syntax of a table setting/sequence file chosen by the
      * user.
      */
     public function indexAction()
@@ -52,16 +57,19 @@ class TableSyntaxController extends Zend_Controller_Action
 
         // Initialize the error message to be empty.
         $this->view->messages = array();
-        $this->view->buttonList = array(self::DO_IT, self::CANCEL);
+        $this->view->buttonList = array(
+            $this->adapter->translate(self::DO_IT),
+            $this->adapter->translate(self::CANCEL)
+        );
 
-        // For initial display, just render the form.  If this is the 
+        // For initial display, just render the form.  If this is the
         // callback after the form has been filled out, process the form.
         if ( ! $this->getRequest()->isPost() ||
-             $this->_submittedButton == self::CHECK_ANOTHER )
+             $this->_submittedButton == $this->adapter->translate(self::CHECK_ANOTHER) )
         {
             // Form will be rendered when function returns
         }
-        elseif ( $this->_submittedButton == self::DO_IT )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::DO_IT) )
         {
             // Get the filename from the filled-out form.
             $formData = $this->getRequest()->getPost();
@@ -74,8 +82,10 @@ class TableSyntaxController extends Zend_Controller_Action
                     Ramp_Table_TableViewSequence::checkSyntax($file);
                 $this->view->messages[] = "";
 
-                $this->view->buttonList = array(self::CHECK_ANOTHER,
-                                                self::DONE);
+                $this->view->buttonList = array(
+                    $this->adapter->translate(self::CHECK_ANOTHER),
+                    $this->adapter->translate(self::DONE)
+                );
             }
             else
             {

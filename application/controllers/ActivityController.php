@@ -48,7 +48,7 @@ class ActivityController extends Zend_Controller_Action
         {
             // Make the activity list available to the View Renderer.
             $this->view->activityList = $actList;
-            $this->view->activityTitle = 
+            $this->view->activityTitle =
                     $gateway->getActivityListTitle($this->_actSpecName);
         }
         else        // Callback based on a button action.
@@ -100,8 +100,8 @@ class ActivityController extends Zend_Controller_Action
     }
 
     /**
-     * Returns true if the current request represents the initial 
-     * display for the current action.  A return of false, therefore, 
+     * Returns true if the current request represents the initial
+     * display for the current action.  A return of false, therefore,
      * indicates that the current request represents the callback
      * specifying an activity to follow.
      *

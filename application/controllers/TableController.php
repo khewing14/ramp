@@ -99,7 +99,7 @@ class TableController extends Zend_Controller_Action
 
     protected $_matchAbbrevs;
 
-    protected $adapter;
+    public $adapter;
 
     /**
      * Initializes the attributes for this object as well as some

@@ -44,9 +44,9 @@ class DocumentController extends Zend_Controller_Action
      */
     public function indexAction()
     {
-        // Determine whether this is an HTML file (which does not need 
-        // special processing), a Markdown file (which needs to be 
-        // transformed to HTML), or plain text (which needs to be put in 
+        // Determine whether this is an HTML file (which does not need
+        // special processing), a Markdown file (which needs to be
+        // transformed to HTML), or plain text (which needs to be put in
         // <PRE> tags in case line breaks are important).
         // Assumption:  all files are either HTML, Markdown, or plain text.
         if ( $this->_isHtml($this->_document) )
