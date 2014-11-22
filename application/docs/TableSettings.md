@@ -58,6 +58,7 @@ The valid table properties are:
   * `tableName`  This property is required!  (Or did I change this?)
   * `tableTitle`
   * `tableFootnote`
+  * `tableSortOrder`
   * `tableShowColsByDefault`
   * `tableConnection`
      ([Importing data](#import) is an advanced feature described below.)
@@ -88,11 +89,24 @@ The `tableTitle` and `tableFootnote` properties may include
 [Markdown][md] formatting to make some words italicized or bold, for
 example.
 
+The `tableSortOrder` property specifies that the data retrieved from the
+database should be sorted by the given field or fields.  For example, a
+table of students could be sorted by their graduation year and then by
+name by listing the relevant database fields in order, as in the
+following example:
+
+        tableSortOrder = "graduationYear, lastname, firstname"
+
 The `tableShowColsByDefault` property, when set to `true` (or `1`),
 specifies that all the fields in the table should be visible unless
 explicitly hidden.  When this property is set, even a field that is not
 referenced in the table setting will be displayed, whereas the usual
 behavior is to hide unreferenced fields.
+
+See the [Advanced Table and Field Features section](#advanced) below
+for information about importing or initializing fields from other
+tables, creating links or external references to other tables, and
+supporting block data entry.
 
 <h3 id="fieldProps"> Field Properties </h3>
 
@@ -104,9 +118,14 @@ The valid field properties are:
   * `readOnly`
   * `recommended`
   * `discouraged`
+  * `suppressIfSame`
+  * `displayInRow`
   * `selectFrom`
+  * `expression`
+     ([Using SQL expressions to populate fields](#expressions) is an
+     advanced feature described below.)
   * `importedFrom` and `importedField`
-     ([Importing data](#import) is an advanced feature described below.)
+     ([Importing data](#import) is another advanced feature described below.)
   * `selectUsing`  ([This property](#selectUsing) is also related to
      [importing data](#import).)
   * `initFrom` and `initFromField`
@@ -153,7 +172,11 @@ to hide specific columns.
 
 #### Read-Only, Required, Recommended, and Discouraged Fields: ####
 
-[TODO: `readOnly`]
+By default, Ramp assumes that users may modify any fields in a table that
+are not primary keys.  One may, however, explicitly set a field to be
+read-only by setting the `readOnly` property to `true`.  (Fields that
+are imported from another table or that are calculated with an SQL
+expression are also treated as read-only fields.)
 
 Fields are defined as "required" in the database itself, not in a table
 setting.  In addition to that functionality, Ramp allows an application
@@ -184,6 +207,49 @@ odd error messages in list and table views along with the icons
 indicating complete or incomplete records (<i class='icon-ok'></i>
 or <i class='icon-adjust'></i>).
 
+#### Influencing the Display: ####
+
+In list, table, and split view displays, it is sometimes useful to visually
+group records into blocks with common fields.  For example, a list of
+schools and departments that have been sorted by school would have a
+series of rows with the first school name and its departments,
+followed by a list of rows with the second school name and its
+departments, _etc_.  By default, the school name is repeated in every
+row whether it changes or not, but one can set the `suppressIfSame`
+property to `true`, which will cause the school name to be displayed
+only when it changes.  (The default is `false`.)
+The difference can be seen in the table below.
+
+ >  <table>
+      <tr><th colspan=2><code>school.suppressIfSame = false</code></th>
+      <th width='15%'></th>
+      <th colspan=2><code>school.suppressIfSame = true</code></th></tr>
+      <tr><td>School 1</td><td>Dept 1</td><td></td>
+        <td>School 1</td><td>Dept 1</td></tr>
+      <tr><td>School 1</td><td>Dept 2</td><td></td>
+        <td></td><td>Dept 2</td></tr>
+      <tr><td>School 1</td><td>Dept 3</td><td></td>
+        <td></td><td>Dept 3</td></tr>
+      <tr><td>School 2</td><td>Dept 4</td><td></td>
+        <td>School 2</td><td>Dept 4</td></tr>
+      <tr><td>School 2</td><td>Dept 5</td><td></td>
+        <td></td><td>Dept 5</td></tr>
+      <tr><td>School 2</td><td>Dept 6</td><td></td>
+        <td></td><td>Dept 6</td></tr>
+    </table>
+
+A split view display divides the fields into two sections; those fields
+whose value is the same for all records being displayed appear once in
+the top section of the page, while fields whose values are different in
+different records appear in a table below.  There may be some fields,
+though, that one might wish to appear in the table section of the page
+even if the value happens to be the same for all records being
+displayed.  One can set the `displayInRow` property for such fields to
+`true` to force them to be displayed in each row of the table section
+rather than with the repeated summary information at the top of the
+page.
+
+
 <h4 id="select">
 Initializing a field from a table of legal values:
 </h4>
@@ -205,6 +271,10 @@ the example below.
 The syntax for the `selectFrom` property, as seen in this example, is:
 
         field.fieldNameInDb.selectFrom = "OtherDbTableName.dbColName"
+
+See the [Advanced Table and Field Features section](#advanced) below
+for information about the field properties used to import or initialize
+fields from other tables.
 
 <h3 id="viewing_sequences">
 Viewing Sequences

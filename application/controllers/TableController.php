@@ -1095,7 +1095,8 @@ class TableController extends Zend_Controller_Action
         $allVisibleFields = $setTable->getVisibleFields();
         foreach ( $allVisibleFields as $fieldName => $field )
         {
-            $whichArray = $this->_allRowsMatch($fullDataSet, $fieldName)
+            $whichArray = ( ! $field->alwaysDisplayInRow() &&
+                            $this->_allRowsMatch($fullDataSet, $fieldName) )
                             ? self::SAME : self::DIFFERENT;
             $data[$whichArray][$fieldName] = $field;
         }

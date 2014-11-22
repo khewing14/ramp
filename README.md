@@ -208,6 +208,21 @@ Individual contributors include:
 >   Kyle Sunden  
 >   Jiakan Wang  
 >   Riley Wetzel  
+>   Jae Hyun (Andrew) Choe  
+>   David Daly  
+>   Ana Paula Dos Santos Dantas  
+>   Sam Evans-Golden  
+>   Kevin Ewing  
+>   Sapana Gupta  
+>   Austin Haffey  
+>   Rana Hayajneh  
+>   Conrad Hipkins-Jones  
+>   Kevin Joh  
+>   Sarah Manski  
+>   Griffin Smalley  
+>   Hayley Smith  
+>   Shang (Sally) Sun  
+>   Alec Wright  
 
 [license-section]: #LICENSE
 [install]: ..%252F..%252FINSTALL.md
