@@ -54,9 +54,9 @@ class IndexController extends Zend_Controller_Action
 
     public function indexAction()
     {
-        // Redirect to the appropriate initial activity for this 
+        // Redirect to the appropriate initial activity for this
         // application and environment, if one has been specified
-        // (see configs/application.ini).  Otherwise ask the user to 
+        // (see configs/application.ini).  Otherwise ask the user to
         // choose an initial activity.
         if ( $this->_initialActivity != null )
         {

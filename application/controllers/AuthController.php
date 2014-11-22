@@ -1,4 +1,4 @@
-<?php 
+<?php
 /**
  * RAMP: Records and Activity Management Program
  *
@@ -33,18 +33,19 @@ class AuthController extends Zend_Controller_Action
     const DETAILS           = 'details';
     const CONTROLLER        = Ramp_Activity_Specification::CONTROLLER;
     const ACTION            = Ramp_Activity_Specification::ACTION;
+    const SUBMIT_BUTTON = 'submit';
 
     /* Button labels */
-    const SUBMIT_BUTTON = 'submit';
     const LOGIN         = 'Login';
     const RESET_PW      = 'Reset Password';
     const SAVE          = 'Save';
-    const DONE          = 'Done';
     const CANCEL        = 'Cancel';
 
 
     protected $_submittedButton;
     protected $_logger = null;
+
+    public $adapter;
 
     public function init()
     {
@@ -61,6 +62,8 @@ class AuthController extends Zend_Controller_Action
             $this->_logger->addFilter(
                             new Zend_Log_Filter_Priority(Zend_Log::INFO));
         }
+        // Load the shared translation adapter from the zend registry
+        $this->adapter = Zend_Registry::get('Zend_Translate');
     }
 
     public function indexAction()
@@ -72,7 +75,7 @@ class AuthController extends Zend_Controller_Action
      * Prompts user for username and password.
      * Modified from Zend Framework in Action by Allen, Lo, and Brown,
      *      2009, p. 134, and the Zend Manual's zend.form.quickstart.
-     */ 
+     */
     public function loginAction()
     {
         // Is the user already logged in?  Go directly to destination.
@@ -88,13 +91,13 @@ class AuthController extends Zend_Controller_Action
         // Initialize the error message to be empty.
         $this->view->formResponse = '';
 
-        // For initial display, just render the form.  If this is the 
+        // For initial display, just render the form.  If this is the
         // callback after the form has been filled out, process the form.
         if ( $this->_thisIsInitialDisplay() )
         {
             // Form will be rendered when function returns
         }
-        elseif ( $this->_submittedButton == self::LOGIN )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::LOGIN) )
         {
             // Process the filled-out form that has been posted:
             // if the input values are valid, attempt to authenticate.
@@ -124,14 +127,17 @@ class AuthController extends Zend_Controller_Action
 
         // Render the view.
         $this->view->form = $form;
-        $this->view->buttonList = array(self::LOGIN, self::CANCEL);
+        $this->view->buttonList = array(
+            $this->adapter->translate(self::LOGIN),
+            $this->adapter->translate(self::CANCEL)
+        );
     }
 
     /**
      * Logs the user out.
      * From Zend Framework in Action by Allen, Lo, and Brown,
      *      2009, p. 138.
-     */ 
+     */
     public function logoutAction()
     {
         $auth = Zend_Auth::getInstance();
@@ -140,10 +146,10 @@ class AuthController extends Zend_Controller_Action
     }
 
     /**
-     * Informs users when they are trying to perform an action for which 
+     * Informs users when they are trying to perform an action for which
      * they are not authorized.
      * Justin Leatherwood, November 2012.
-     */ 
+     */
     public function unauthorizedAction()
     {
         // See if specific information was passed as a parameter.
@@ -161,7 +167,7 @@ class AuthController extends Zend_Controller_Action
     /**
      * Prompts user to initialize the password.
      *     (Internal authentication only!)
-     */ 
+     */
     public function initPasswordAction()
     {
         // Get the username.
@@ -178,7 +184,7 @@ class AuthController extends Zend_Controller_Action
         {
             $this->view->msg = 'Password must be initialized.';
         }
-        elseif ( $this->_submittedButton == self::SAVE )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::SAVE) )
         {
             // Process the filled-out form that has been posted.
             $formData = $this->getRequest()->getPost();
@@ -213,17 +219,20 @@ class AuthController extends Zend_Controller_Action
 
         // Render the view.
         $this->view->form = $form;
-        $this->view->buttonList = array(self::SAVE, self::CANCEL);
+        $this->view->buttonList = array(
+            $this->adapter->translate(self::SAVE),
+            $this->adapter->translate(self::CANCEL)
+        );
     }
 
     /**
      * Allows user to change their password.  (Internal authentication only!)
-     */ 
+     */
     public function changePasswordAction()
     {
         // If user has been logged out below (incorrect password) and now wants
         // to login, go directly there.
-        if ( $this->_submittedButton == self::LOGIN )
+        if ( $this->_submittedButton == $this->adapter->translate(self::LOGIN) )
         {
             $this->_helper->redirector('login', 'auth');
         }
@@ -244,19 +253,22 @@ class AuthController extends Zend_Controller_Action
 
         // Specify the view that will be rendered when the function returns.
         $this->view->form = $form;
-        $this->view->buttonList = array(self::SAVE, self::CANCEL);
+        $this->view->buttonList = array(
+            $this->adapter->translate(self::SAVE),
+            $this->adapter->translate(self::CANCEL)
+        );
 
         // Initial display, or ready to process filled-out form?
         if ( $this->_thisIsInitialDisplay() )
         {
             // Form will be rendered when function returns
         }
-        elseif ( $this->_submittedButton == self::SAVE )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::SAVE) )
         {
             $formData = $this->getRequest()->getPost();
             if ($form->isValid($formData))
             {
-                // Authenticate the user using the old password, then 
+                // Authenticate the user using the old password, then
                 // process the password change.
                 $password = $formData[self::PASSWORD];
                 if ( $this->_authenticate($username, $password) )
@@ -274,7 +286,10 @@ class AuthController extends Zend_Controller_Action
                         'Old password is not correct.  ' .
                         'You have been logged out.';
                     $this->view->form = null;
-                    $this->view->buttonList = array(self::LOGIN, self::CANCEL);
+                    $this->view->buttonList = array(
+                        $this->adapter->translate(self::LOGIN),
+                        $this->adapter->translate(self::CANCEL)
+                    );
                 }
             }
             else
@@ -291,7 +306,7 @@ class AuthController extends Zend_Controller_Action
 
     /**
      * Resets a user's password.  (Internal authentication only!)
-     */ 
+     */
     public function resetPasswordAction()
     {
         // Instantiate the form that asks whose password to reset.
@@ -301,13 +316,13 @@ class AuthController extends Zend_Controller_Action
         $this->view->formResponse = '';
         $this->view->msg = '';
 
-        // For initial display, just render the form.  If this is the 
+        // For initial display, just render the form.  If this is the
         // callback after the form has been filled out, process the form.
         if ( $this->_thisIsInitialDisplay() )
         {
             // Form will be rendered when function returns
         }
-        elseif ( $this->_submittedButton == self::RESET_PW )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::RESET_PW) )
         {
             // Process the filled-out form that has been posted:
             // if the input values are valid, reset the password.
@@ -333,12 +348,15 @@ class AuthController extends Zend_Controller_Action
 
         // Render the view.
         $this->view->form = $form;
-        $this->view->buttonList = array(self::RESET_PW, self::CANCEL);
+        $this->view->buttonList = array(
+            $this->adapter->translate(self::RESET_PW),
+            $this->adapter->translate(self::CANCEL)
+        );
     }
 
     /**
      * Validates that all roles in the Users Table have been defined.
-     */ 
+     */
     public function validateRolesAction()
     {
         $this->view->invalid = array();
@@ -346,12 +364,12 @@ class AuthController extends Zend_Controller_Action
         // Get the access control list containing roles and resources.
         $acl = new Ramp_Acl();
 
-        // Get the Access Control List containing defined roles and 
+        // Get the Access Control List containing defined roles and
         // resources.
         $userInfo = new Ramp_Auth_DbTable_Users();
         $roles = $userInfo->getRoles();
 
-        // Check the access rules to validate whether each role and 
+        // Check the access rules to validate whether each role and
         // resource exist in the access control list.
         foreach ( $roles as $role )
         {
@@ -365,7 +383,7 @@ class AuthController extends Zend_Controller_Action
     /**
      * Validates that all roles and resources in Access Control List
      * rules have been defined.
-     */ 
+     */
     public function validateAclRulesAction()
     {
         $this->view->invalid = array();
@@ -373,12 +391,12 @@ class AuthController extends Zend_Controller_Action
         // Get the access control list containing roles and resources.
         $acl = new Ramp_Acl();
 
-        // Get the Access Control List containing defined roles and 
+        // Get the Access Control List containing defined roles and
         // resources.
         $authInfo = new Ramp_Auth_DbTable_Auths();
         $accessRules = $authInfo->getAccessRules();
 
-        // Check the access rules to validate whether each role and 
+        // Check the access rules to validate whether each role and
         // resource exist in the access control list.
         foreach ( $accessRules as $ruleNumber => $rule )
         {
@@ -400,7 +418,7 @@ class AuthController extends Zend_Controller_Action
     /**
      * View roles, resources, and resources that have been defined for
      * Access Control Lists for debugging purposes.
-     */ 
+     */
     public function viewAclInfoAction()
     {
         $acl = new Ramp_Acl();
@@ -409,7 +427,7 @@ class AuthController extends Zend_Controller_Action
         $msgs[] = "<h4>Roles:</h4>" . var_export($acl->getRoles(), true);
         $msgs[] = "<h4>Resources:</h4>"
                     . var_export($acl->getResources(), true);
-        // Too hard to return all rules, so just concentrate on rules 
+        // Too hard to return all rules, so just concentrate on rules
         // from Registry and Database.
         $msgs[] = "<h4>Rules:</h4>"
                     . "<h5>"
@@ -422,9 +440,9 @@ class AuthController extends Zend_Controller_Action
     }
 
     /**
-     * Returns true if the current request represents the initial 
-     * display for the current action.  A return of false, therefore, 
-     * indicates that the current request represents the callback with 
+     * Returns true if the current request represents the initial
+     * display for the current action.  A return of false, therefore,
+     * indicates that the current request represents the callback with
      * fields filled in.
      */
     protected function _thisIsInitialDisplay()
@@ -433,8 +451,8 @@ class AuthController extends Zend_Controller_Action
     }
 
     /**
-     * Validates the username and password.  If valid, stores identity 
-     * information (except for the password) to provide a persistent 
+     * Validates the username and password.  If valid, stores identity
+     * information (except for the password) to provide a persistent
      * identity.
      * Modified from Zend Framework in Action by
      *      Allen, Lo, and Brown, 2009, p. 134
@@ -444,7 +462,7 @@ class AuthController extends Zend_Controller_Action
      * @param   $username   username returned from the login form
      * @param   $password   password returned from the login form
      * @return  boolean indicating whether authentication was successful
-     */ 
+     */
     protected function _authenticate($username, $password)
     {
         $authAdapter = $this->_getAuthAdapter($username, $password);
@@ -481,7 +499,7 @@ class AuthController extends Zend_Controller_Action
     }
 
     /**
-     * Gets the authentication adapter (connection to internal or 
+     * Gets the authentication adapter (connection to internal or
      * external authentication mechanism).
      *
      * @param   $username   username returned from the login form
@@ -490,7 +508,7 @@ class AuthController extends Zend_Controller_Action
      */
     protected function _getAuthAdapter($username, $password)
     {
-        // Get authentication type (e.g., internal, ldap) and 
+        // Get authentication type (e.g., internal, ldap) and
         // appropriate authentication adapter.
         $configs = Ramp_RegistryFacade::getInstance();
         if ( $configs->usingInternalAuthentication() )
@@ -510,7 +528,7 @@ class AuthController extends Zend_Controller_Action
     }
 
     /**
-     * Sets up an authentication adapter for internal authentication 
+     * Sets up an authentication adapter for internal authentication
      * (authentication using a RAMP database table).  The
      * Ramp_Auth_Adapter_DbTable adapter handles encryption with a
      * salt derived from the credential in the database.
@@ -521,31 +539,31 @@ class AuthController extends Zend_Controller_Action
      * @param   $username   username returned from the login form
      * @param   $password   password returned from the login form
      * @return  the adapter
-     */ 
+     */
     protected function _getInternalAuthAdapter($username, $password)
     {
         $dbAdapter = Zend_Registry::get('db');
 
-        // Create an adapter that uses the identity and credential columns 
+        // Create an adapter that uses the identity and credential columns
         // and the credential treatment defined above.
         $authAdapter = new Ramp_Auth_Adapter_DbTable($dbAdapter);
         $authAdapter->setTableName(self::USERS_TABLE)
                 ->setIdentityColumn(self::USERNAME)
                 ->setCredentialColumn(self::PASSWORD);
 
-        // Adjust the adapter to authenticate the actual username and 
+        // Adjust the adapter to authenticate the actual username and
         // password provided by the user.
         $authAdapter->setIdentity($username);
         $authAdapter->setCredential($password);  //encrypts it also
 
-        // If the username is not a valid, active username, getting the 
+        // If the username is not a valid, active username, getting the
         // adapter fails.
         if ( $authAdapter->notAValidIdentity() )
         {
             return null;
         }
 
-        // If there was no credential in the database, force the user to 
+        // If there was no credential in the database, force the user to
         // set one.
         if ( $authAdapter->needsPassword() )
         {
@@ -565,7 +583,7 @@ class AuthController extends Zend_Controller_Action
      * @param   $username   username returned from the login form
      * @param   $password   password returned from the login form
      * @return  the adapter
-     */ 
+     */
     protected function _getLDAPAuthAdapter($username, $password)
     {
         $ldapOptions = Zend_Registry::get('ldap');
@@ -578,7 +596,7 @@ class AuthController extends Zend_Controller_Action
      * Saves identity-related user session information.
      *
      * @param @auth       authentication object
-     * @param $userData   user data from Ramp authentication (username, 
+     * @param $userData   user data from Ramp authentication (username,
      *                        role, active, and possibly others)
      */
     protected function _saveUserSessionInfo($auth, $userData)
@@ -629,7 +647,7 @@ class AuthController extends Zend_Controller_Action
     }
 
     /**
-     * Goes to attempted destination (before detour to log in) or to 
+     * Goes to attempted destination (before detour to log in) or to
      * home page if there is no attempted destination.
      */
     protected function _goToAttemptedDestOrHome()
@@ -656,10 +674,10 @@ class AuthController extends Zend_Controller_Action
     }
 
     /**
-     * Processes a password change request by confirming that the new 
-     * password and confirmed password are equivalent and then setting 
-     * an encrypted version of the password in the database.  The 
-     * encryption is performed by the setPassword method in the class 
+     * Processes a password change request by confirming that the new
+     * password and confirmed password are equivalent and then setting
+     * an encrypted version of the password in the database.  The
+     * encryption is performed by the setPassword method in the class
      * modeling the Users table.
      *
      * @param $form      the form containing the new and confirmed passwords

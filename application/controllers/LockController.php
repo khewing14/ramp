@@ -26,9 +26,14 @@ class LockController extends Zend_Controller_Action
     const USER          = Ramp_Lock_DbTable_Locks::USER;
     const LOCKS         = Ramp_Form_Lock_FreeLock::LOCKS;
 
+    public $adapter;
+
     public function init()
     {
         // Initialize action controller here
+
+        // Load the shared translation adapter from the zend registry
+        $this->adapter = Zend_Registry::get('Zend_Translate');
     }
 
     public function indexAction()
@@ -39,7 +44,7 @@ class LockController extends Zend_Controller_Action
     /**
      * Controls the editing action for a single, editable record on a page.
      *
-     * Precondition: this action should only be invoked when the 
+     * Precondition: this action should only be invoked when the
      * parameters provided uniquely identify a single record.
      */
     public function unavailableLockAction()
@@ -54,7 +59,7 @@ class LockController extends Zend_Controller_Action
 
     /**
      * Prompt the user for information about the lock to release.
-     */ 
+     */
     public function freeLockAction()
     {
         // Determine what action to take next.
@@ -63,9 +68,9 @@ class LockController extends Zend_Controller_Action
         // Initialize the information message to be empty.
         $this->view->msg = '';
 
-        // This action proceeds in two phases.  In the first phase, the 
-        // administrator chooses the user who holds the lock that needs 
-        // to be freed.  In the second phase, the administrator frees a 
+        // This action proceeds in two phases.  In the first phase, the
+        // administrator chooses the user who holds the lock that needs
+        // to be freed.  In the second phase, the administrator frees a
         // particular lock held by that user.
 
         if ( ! $this->getRequest()->isPost() )
@@ -75,9 +80,12 @@ class LockController extends Zend_Controller_Action
 
             // Render the correct form.
             $this->view->form = $form;
-            $this->view->buttonList = array(self::FIND_LOCKS, self::CANCEL);
+            $this->view->buttonList = array(
+                $this->adapter->translate(self::FIND_LOCKS),
+                $this->adapter->translate(self::CANCEL)
+            );
         }
-        elseif ( $submittedButton == self::FIND_LOCKS )
+        elseif ( $submittedButton == $this->adapter->translate(self::FIND_LOCKS) )
         {
             // Process Phase 1:  Get the chosen user.
             $form = new Ramp_Form_Lock_ChooseLockUser();
@@ -86,12 +94,15 @@ class LockController extends Zend_Controller_Action
 
             // Start Phase 2: Choose the lock to release.
             $form = new Ramp_Form_Lock_FreeLock($user);
-            $this->view->buttonList = array(self::RELEASE_LOCK, self::CANCEL);
+            $this->view->buttonList = array(
+                $this->adapter->translate(self::RELEASE_LOCK),
+                $this->adapter->translate(self::CANCEL)
+            );
 
             // Render the correct form.
             $this->view->form = $form;
         }
-        elseif ( $submittedButton == self::RELEASE_LOCK )
+        elseif ( $submittedButton == $this->adapter->translate(self::RELEASE_LOCK) )
         {
             // Process Phase 2: Release the chosen lock.
             $formData = $this->getRequest()->getPost();

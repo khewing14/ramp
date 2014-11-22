@@ -18,8 +18,8 @@
  *
  */
 
-/* TODO: might re-organize action functions to handle callbacks first, 
- * especially callbacks that just mean going elsewhere (eliminating the 
+/* TODO: might re-organize action functions to handle callbacks first,
+ * especially callbacks that just mean going elsewhere (eliminating the
  * need to read the table from the database first).
  */
 
@@ -39,24 +39,25 @@ class TableController extends Zend_Controller_Action
 
 
     /* labels for forms and buttons */
+    const ADD                   = 'Add';
     const VIEW                  = 'View';       // used by Form
-    const SEARCH                = "Search";
-    const MATCH_ALL             = "Search On All Fields";
-    const MATCH_ANY             = "Match Against Any Field";
-    const DISPLAY_ALL           = "Display All Entries";
-    const LIST_VIEW             = "List Display";
-    const TABLE                 = "Tabular Display";
-    const SPLIT_VIEW            = "Split View Display";
-    const CLONE_BUTTON          = "Clone This Entry";
-    const BLOCK_ENTRY_PREFIX    = "Add ";
-    const BLOCK_ENTRY_SUFFIX    = " in a Block";
-    const BLOCK_EDIT_LABEL      = "Edit Records in a Block";
-    const EDIT                  = "Edit Entry";
-    const DEL_BUTTON            = "Delete Entry";
-    const RESET_BUTTON          = "Reset Fields";
-    const CANCEL                = "Cancel";
-    const CONFIRM               = "Confirm";
-    const SAVE                  = "Save Changes";
+    const SEARCH                = 'Search';
+    const MATCH_ALL             = 'Search On All Fields';
+    const MATCH_ANY             = 'Match Against Any Field';
+    const DISPLAY_ALL           = 'Display All Entries';
+    const LIST_VIEW             = 'List Display';
+    const TABLE                 = 'Tabular Display';
+    const SPLIT_VIEW            = 'Split View Display';
+    const CLONE_BUTTON          = 'Clone This Entry';
+    const BLOCK_ENTRY_PREFIX    = 'Add ';
+    const BLOCK_ENTRY_SUFFIX    = ' in a Block';
+    const BLOCK_EDIT_LABEL      = 'Edit Records in a Block';
+    const EDIT                  = 'Edit Entry';
+    const DEL_BUTTON            = 'Delete Entry';
+    const RESET_BUTTON          = 'Reset Fields';
+    const CANCEL                = 'Cancel';
+    const CONFIRM               = 'Confirm';
+    const SAVE                  = 'Save Changes';
 
     /* values for processing search requests */
     const SEARCH_VALS       = Ramp_Form_Table_TableRecordEntry::FIELD_VALUES;
@@ -64,15 +65,15 @@ class TableController extends Zend_Controller_Action
     // Constant representing an unspecified enum value for a search.
     const ANY_VAL               = Ramp_Table_SetTable::ANY_VAL;
 
-    // Constants to index the "same" and "different" fields for split views.
-    const SAME                  = "same";
-    const DIFFERENT             = "different";
+    // Constants to index the 'same' and 'different' fields for split views.
+    const SAME                  = 'same';
+    const DIFFERENT             = 'different';
 
     // Constant representing a block entry property in the set table.
     const BLOCK_ENTRY           = Ramp_Table_SetTable::BLOCK_ENTRY;
 
     // Constant to use as a suffix on shared data elements.
-    const SHARED_DATA           = ".shared";
+    const SHARED_DATA           = '.shared';
 
     protected $_debugging = false;
 
@@ -96,8 +97,9 @@ class TableController extends Zend_Controller_Action
 
     protected $_baseParams = null;
 
-    protected $_matchAbbrevs = array(self::MATCH_ALL => self::ALL,
-                                     self::MATCH_ANY => self::ANY);
+    protected $_matchAbbrevs;
+
+    public $adapter;
 
     /**
      * Initializes the attributes for this object as well as some
@@ -116,8 +118,10 @@ class TableController extends Zend_Controller_Action
         // Set the basic parameters to build on when going to other actions.
         $this->_controllerName = $this->getRequest()->getControllerName();
         $this->_actionName = $this->getRequest()->getActionName();
-        $this->_baseParams = array('controller' => $this->_controllerName,
-                       self::SETTING_NAME => $this->_encodedSeqName);
+        $this->_baseParams = array(
+            'controller' => $this->_controllerName,
+            self::SETTING_NAME => $this->_encodedSeqName
+        );
 
         // Get and store other parameters for possible future use.
         $this->_submittedButton = $this->_getParam(self::SUBMIT_BUTTON);
@@ -133,20 +137,25 @@ class TableController extends Zend_Controller_Action
         // Get the sequence information (types of table settings to use).
         if ( $this->_actionName != "check-syntax" )
         {
-            $this->_tblViewingSeq = 
+            $this->_tblViewingSeq =
                 Ramp_Table_TVSFactory::getSequenceOrSetting($seqName);
         }
 
-        $adapter = Zend_Registry::get('Zend_Translate');
-        $this->ADD = $adapter->translate('test');
+        // Load the shared translation adapter from the zend registry
+        $this->adapter = Zend_Registry::get('Zend_Translate');
+
+        $this->_matchAbbrevs = array(
+            $this->adapter->translate(self::MATCH_ALL) => self::ALL,
+            $this->adapter->translate(self::MATCH_ANY) => self::ANY
+        );
 
 // $this->_debugging = true;
 
     }
 
     /**
-     * Provides a gateway to this set of actions.  Chooses the actual 
-     * action to take based on the initial action defined for this table 
+     * Provides a gateway to this set of actions.  Chooses the actual
+     * action to take based on the initial action defined for this table
      * setting.
      */
     public function indexAction()
@@ -164,10 +173,14 @@ class TableController extends Zend_Controller_Action
 
         // Let the view renderer know the table, buttons, and data form to use.
         $this->_initViewTableInfo($setTable);
-        $this->view->buttonList = array(self::MATCH_ALL, self::MATCH_ANY,
-                                        self::RESET_BUTTON, self::DISPLAY_ALL);
+        $this->view->buttonList = array(
+            $this->adapter->translate(self::MATCH_ALL),
+            $this->adapter->translate(self::MATCH_ANY),
+            $this->adapter->translate(self::RESET_BUTTON),
+            $this->adapter->translate(self::DISPLAY_ALL)
+        );
         $this->view->dataEntryForm = $form =
-                                $this->_getForm($setTable, self::SEARCH);
+                                $this->_getForm($setTable, $this->adapter->translate(self::SEARCH));
 
         // Is this the initial display or a callback from a button action?
         if ( $this->_thisIsInitialDisplay() )
@@ -175,7 +188,7 @@ class TableController extends Zend_Controller_Action
             // Have fields been provided?
             if ( ! empty($this->_fieldsToMatch) )
                 $this->_executeSearch($setTable, $this->_fieldsToMatch,
-                    $this->_matchComparators, self::MATCH_ALL);
+                    $this->_matchComparators, $this->adapter->translate(self::MATCH_ALL));
 
             // Otherwise, nothing to do except render view (done automatically).
         }
@@ -186,7 +199,7 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Executes the search and goes to the appropriate display page.  
+     * Executes the search and goes to the appropriate display page.
      * Only returns if the search failed.
      *
      * @param $setTable    table setting for the table in which to search
@@ -221,7 +234,7 @@ class TableController extends Zend_Controller_Action
         {
             // Search failed.
             $this->view->errMsgs[] = "No matching results were found.";
-            $this->view->buttonList[] = $this->ADD;
+            $this->view->buttonList[] = $this->adapter->translate(self::ADD);
             $this->view->dataEntryForm->populate($data);
         }
     }
@@ -234,7 +247,7 @@ class TableController extends Zend_Controller_Action
      */
     protected function _processSearchCallBack($setTable, $form)
     {
-        if ( $this->_submittedButton == self::DISPLAY_ALL )
+        if ( $this->_submittedButton == $this->adapter->translate(self::DISPLAY_ALL) )
         {
             $this->_goTo($this->_displayAllView);
         }
@@ -249,7 +262,7 @@ class TableController extends Zend_Controller_Action
                                                           $comparators);
 
                 // Adding new entry based on failed search?
-                if ( $this->_submittedButton == $this->ADD )
+                if ( $this->_submittedButton == $this->adapter->translate(self::ADD) )
                 {
                     if ( $this->_illegalCallback($setTable) )
                         { return; }
@@ -257,7 +270,7 @@ class TableController extends Zend_Controller_Action
                     $this->_goTo('add', $meaningfulData);
                 }
 
-                // Searching for any or all matches. Display based on 
+                // Searching for any or all matches. Display based on
                 // number of results.
                 $this->_executeSearch($setTable, $meaningfulData,
                                       $comparators, $this->_submittedButton);
@@ -288,12 +301,12 @@ class TableController extends Zend_Controller_Action
         {
             // Let view renderer know the table and data set to use.
             $this->view->buttonList =
-                    $this->_multiRecordButtonSet(self::LIST_VIEW, $setTable);
+                    $this->_multiRecordButtonSet($this->adapter->translate(self::LIST_VIEW), $setTable);
             $this->_multiRecordInitDisplay($setTable);
         }
-        elseif ( $this->_submittedButton == self::TABLE ||
-                 $this->_submittedButton == self::SPLIT_VIEW  ||
-                 $this->_submittedButton == $this->ADD ||
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::TABLE) ||
+                 $this->_submittedButton == $this->adapter->translate(self::SPLIT_VIEW)  ||
+                 $this->_submittedButton == $this->adapter->translate(self::ADD) ||
                  $this->_blockAdd($this->_submittedButton) )
         {
             // Go to a different view with the same data set.
@@ -321,12 +334,12 @@ class TableController extends Zend_Controller_Action
         {
             // Let view renderer know the table and data set to use.
             $this->view->buttonList =
-                    $this->_multiRecordButtonSet(self::TABLE, $setTable);
+                    $this->_multiRecordButtonSet($this->adapter->translate(self::TABLE), $setTable);
             $this->_multiRecordInitDisplay($setTable);
         }
-        elseif ( $this->_submittedButton == self::LIST_VIEW ||
-                 $this->_submittedButton == self::SPLIT_VIEW  ||
-                 $this->_submittedButton == $this->ADD ||
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::LIST_VIEW) ||
+                 $this->_submittedButton == $this->adapter->translate(self::SPLIT_VIEW)  ||
+                 $this->_submittedButton == $this->adapter->translate(self::ADD) ||
                  $this->_blockAdd($this->_submittedButton) )
         {
             // Go to a different view with the same data set.
@@ -353,7 +366,7 @@ class TableController extends Zend_Controller_Action
         {
             // Let view renderer know the table and data sets to use.
             $this->view->buttonList =
-                    $this->_multiRecordButtonSet(self::SPLIT_VIEW, $setTable);
+                    $this->_multiRecordButtonSet($this->adapter->translate(self::SPLIT_VIEW), $setTable);
             $this->_multiRecordInitDisplayWithoutData($setTable);
 
             // Get full data set and split into shared/different fields.
@@ -371,9 +384,9 @@ class TableController extends Zend_Controller_Action
             $differentViewSetting = $this->_createDifferentView($setTable,
                                                 $fullDataSet, $sharedData);
         }
-        elseif ( $this->_submittedButton == self::LIST_VIEW ||
-                 $this->_submittedButton == self::TABLE  ||
-                 $this->_submittedButton == $this->ADD ||
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::LIST_VIEW) ||
+                 $this->_submittedButton == $this->adapter->translate(self::TABLE)  ||
+                 $this->_submittedButton == $this->adapter->translate(self::ADD) ||
                  $this->_blockAdd($this->_submittedButton) )
         {
             // Go to a different view with the same data set.
@@ -389,7 +402,7 @@ class TableController extends Zend_Controller_Action
     /**
      * Presents a single record on a page for viewing.
      *
-     * Precondition: this action should only be invoked when the 
+     * Precondition: this action should only be invoked when the
      * provided parameters uniquely identify a single record.
      */
     public function recordViewAction()
@@ -398,10 +411,19 @@ class TableController extends Zend_Controller_Action
 
         // Let the view renderer know the table, buttons, and data form to use.
         $this->_initViewTableInfo($setTable);
-        $buttonList = array(self::EDIT, $this->ADD, self::CLONE_BUTTON);
-        $this->view->buttonList = array_merge($buttonList, 
-                    array(self::SEARCH, self::DEL_BUTTON));
-                // array(self::SEARCH, self::DEL_BUTTON, self::DISPLAY_ALL));
+        $buttonList = array(
+            $this->adapter->translate(self::EDIT),
+            $this->adapter->translate(self::ADD),
+            $this->adapter->translate(self::CLONE_BUTTON)
+        );
+        $this->view->buttonList = array_merge(
+            $buttonList,
+            array(
+                $this->adapter->translate(self::SEARCH),
+                $this->adapter->translate(self::DEL_BUTTON)
+            )
+        );
+                // array(self::SEARCH, $this->adapter->translate(self::DEL_BUTTON,) $this->adapter->translate(self::DISPLAY_ALL)));
         $this->view->dataEntryForm = $form = $this->_getForm($setTable);
 
         // Is this the initial display or a callback from a button action?
@@ -412,14 +434,14 @@ class TableController extends Zend_Controller_Action
             // Retrieve record based on provided fields / primary keys.
             $form->populate($setTable->getTableEntry($this->_fieldsToMatch));
         }
-        elseif ( $this->_submittedButton == self::CLONE_BUTTON )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::CLONE_BUTTON) )
         {
             $this->_goTo('add',
                          $setTable->getCloneableFields($this->_fieldsToMatch));
         }
-        elseif ( $this->_submittedButton == self::EDIT )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::EDIT) )
             { $this->_goTo('record-edit', $this->_fieldsToMatch); }
-        elseif ( $this->_submittedButton == self::DEL_BUTTON )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::DEL_BUTTON ))
             { $this->_goTo('delete', $this->_fieldsToMatch); }
         else
             { $this->_goTo($this->_getButtonAction($this->_submittedButton)); }
@@ -429,7 +451,7 @@ class TableController extends Zend_Controller_Action
     /**
      * Controls the editing action for a single, editable record on a page.
      *
-     * Precondition: this action should only be invoked when the 
+     * Precondition: this action should only be invoked when the
      * parameters provided uniquely identify a single record.
      */
     public function recordEditAction()
@@ -438,10 +460,16 @@ class TableController extends Zend_Controller_Action
 
         // Let the view renderer know the table, buttons, and data form to use.
         $this->_initViewTableInfo($setTable);
-        $this->view->buttonList = array(self::SAVE, self::RESET_BUTTON,
-                                        self::CANCEL, self::DEL_BUTTON);
+
+        $this->view->buttonList = array(
+            $this->adapter->translate(self::SAVE),
+            $this->adapter->translate(self::RESET_BUTTON),
+            $this->adapter->translate(self::CANCEL),
+            $this->adapter->translate(self::DEL_BUTTON)
+        );
+
         $this->view->dataEntryForm = $form =
-                                  $this->_getForm($setTable, self::EDIT);
+                                  $this->_getForm($setTable, $this->adapter->translate(self::EDIT));
 
         // Is this the initial display or the post-edit callback?
         if ( $this->_thisIsInitialDisplay() )
@@ -450,7 +478,7 @@ class TableController extends Zend_Controller_Action
             $this->_acquireLock($setTable, $this->_fieldsToMatch);
             $form->populate($setTable->getTableEntry($this->_fieldsToMatch));
         }
-        elseif ( $this->_submittedButton == self::SAVE )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::SAVE) )
         {
             // Process the filled-out form that has been posted:
             // if the changes are valid, update the database.
@@ -470,7 +498,7 @@ class TableController extends Zend_Controller_Action
                 $form->populate($formData);
             }
         }
-        elseif ( $this->_submittedButton == self::DEL_BUTTON )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::DEL_BUTTON ))
         {
             $this->_releaseLock($setTable, $this->_fieldsToMatch);
             $this->_goTo('delete', $this->_fieldsToMatch);
@@ -512,8 +540,12 @@ class TableController extends Zend_Controller_Action
         if ( $this->_thisIsInitialDisplay() )
         {
             // Let view renderer know the table and data sets to use.
-            $this->view->buttonList = array(self::SAVE, self::RESET_BUTTON,
-                                            self::CANCEL);
+            $this->view->buttonList = array(
+                $this->adapter->translate(self::SAVE),
+                $this->adapter->translate(self::RESET_BUTTON),
+                $this->adapter->translate(self::CANCEL)
+            );
+
             $this->_multiRecordInitDisplayWithoutData($setTable);
 
             // Create setting for viewing different values.
@@ -532,12 +564,12 @@ class TableController extends Zend_Controller_Action
                     $adjustedRow[$fieldName . $suffix] = $fieldVal;
                 }
                 $this->view->entryForms[] = $form =
-                    $this->_getForm($differentViewSetting, self::EDIT,
+                    $this->_getForm($differentViewSetting, $this->adapter->translate(self::EDIT),
                                     true, $suffix);
                 $form->populate($adjustedRow);
             }
         }
-        elseif ( $this->_submittedButton == self::SAVE )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::SAVE) )
         {
             $updateSetting = $setTable->createSubsetWithOnly($blockEditFields);
             $keyFields = $updateSetting->getPrimaryKeys();
@@ -548,7 +580,7 @@ class TableController extends Zend_Controller_Action
                             array_intersect_key($sharedData, $localFields);
             $this->view->stuff[] = $relevantSharedData;
 
-            // Extract the new data from the posted data (field names 
+            // Extract the new data from the posted data (field names
             // are encoded to make each row's field names unique).
             $formData = $this->getRequest()->getPost();
             unset($formData[self::SUBMIT_BUTTON]);
@@ -589,10 +621,16 @@ class TableController extends Zend_Controller_Action
 
         // Let the view renderer know the table, buttons, and data form to use.
         $this->_initViewTableInfo($setTable);
-        $this->view->buttonList = array(self::SAVE, self::RESET_BUTTON,
-                                        self::CANCEL, self::SEARCH);
+
+        $this->view->buttonList = array(
+            $this->adapter->translate(self::SAVE),
+            $this->adapter->translate(self::RESET_BUTTON),
+            $this->adapter->translate(self::CANCEL),
+            $this->adapter->translate(self::SEARCH)
+        );
+
         $this->view->dataEntryForm = $form =
-                                    $this->_getForm($setTable, $this->ADD);
+                                    $this->_getForm($setTable, $this->adapter->translate(self::ADD));
 
         // Is this the initial display or the callback with fields provided?
         if ( $this->_thisIsInitialDisplay() )
@@ -603,7 +641,7 @@ class TableController extends Zend_Controller_Action
                 $form->populate($this->_fieldsToMatch);
             }
         }
-        elseif ( $this->_submittedButton == self::SAVE )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::SAVE) )
         {
             // Process the filled-out form that has been posted:
             // if the changes are valid, update the database.
@@ -622,7 +660,7 @@ class TableController extends Zend_Controller_Action
                     // Update the database and redisplay the record.
                     $setTable->addTableEntry($meaningfulData);
                     $this->_executeSearch($setTable, $meaningfulData, null,
-                                          self::DISPLAY_ALL);
+                                          $this->adapter->translate(self::DISPLAY_ALL));
                 }
             }
             else
@@ -633,17 +671,17 @@ class TableController extends Zend_Controller_Action
                 $form->populate($formData);
             }
         }
-        elseif ( $this->_submittedButton == self::CANCEL )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::CANCEL) )
             { $this->_goTo('index', $this->_fieldsToMatch); }
         else
             { $this->_goTo($this->_getButtonAction($this->_submittedButton)); }
-        
+
     }
 
     /**
      * Controls the Table block-add action, presenting a page in which
-     * to create multiple new records by providing multiple keys.  
-     * (Useful with one-to-many relationship tables (or one side of 
+     * to create multiple new records by providing multiple keys.
+     * (Useful with one-to-many relationship tables (or one side of
      * many-to-many relationship tables), e.g., adding multiple students
      * to a class enrollment (class <--> student) table.)
      */
@@ -658,8 +696,13 @@ class TableController extends Zend_Controller_Action
         }
 
         // Let view renderer know the table and data sets to use.
-        $this->view->buttonList = array(self::SAVE, self::RESET_BUTTON,
-                                        self::CANCEL, self::SEARCH);
+        $this->view->buttonList = array(
+            $this->adapter->translate(self::SAVE),
+            $this->adapter->translate(self::RESET_BUTTON),
+            $this->adapter->translate(self::CANCEL),
+            $this->adapter->translate(self::SEARCH)
+        );
+
         $this->_multiRecordInitDisplayWithoutData($setTable);
 
         // Get full data set and split into shared/different fields.
@@ -670,12 +713,12 @@ class TableController extends Zend_Controller_Action
         $sharedData = $dataSplit[self::SAME];
         $differentFields = $dataSplit[self::DIFFERENT];
 
-        // Get settings for shared and entry data (needed for initial 
+        // Get settings for shared and entry data (needed for initial
         // display and callbacks).
         $sharedViewSetting = $this->_createSharedView($setTable, $sharedData,
                                                       $differentFields);
         $entryField = $setTable->getBlockEntryField();
-        $entrySetting = $this->view->entrySetting = 
+        $entrySetting = $this->view->entrySetting =
                             $setTable->createSingleFieldSubset($entryField);
 
         // Create forms for block data entry. (Fatal error if the setting
@@ -690,7 +733,7 @@ class TableController extends Zend_Controller_Action
             for ( $i = 0; $i < $count; $i++ )
             {
                 $form = $this->view->entryForms[] =
-                    $this->_getForm($entrySetting, $this->ADD, true, "_" . $i);
+                    $this->_getForm($entrySetting, $this->adapter->translate(self::ADD), true, "_" . $i);
             }
         }
         else
@@ -706,7 +749,7 @@ class TableController extends Zend_Controller_Action
             $differentViewSetting = $this->_createDifferentView($setTable,
                                                     $fullDataSet, $sharedData);
         }
-        elseif ( $this->_submittedButton == self::SAVE )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::SAVE) )
         {
             // Get the new entry fields from the posted data.
             $formData = $this->getRequest()->getPost();
@@ -763,7 +806,7 @@ class TableController extends Zend_Controller_Action
         }
     */
 
-        elseif ( $this->_submittedButton == self::CANCEL )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::CANCEL) )
             { $this->_goTo('split-view', $this->_fieldsToMatch); }
         else
             { $this->_goTo($this->_getButtonAction($this->_submittedButton)); }
@@ -784,9 +827,12 @@ class TableController extends Zend_Controller_Action
 
         // Let the view renderer know the table, buttons, and data form to use.
         $this->_initViewTableInfo($setTable);
-        $this->view->buttonList = array(self::CONFIRM, self::CANCEL);
+        $this->view->buttonList = array(
+            self::CONFIRM,
+            $this->adapter->translate(self::CANCEL)
+        );
         $this->view->dataEntryForm = $form = $this->_getForm($setTable,
-                                                             self::DEL_BUTTON);
+                                                             $this->adapter->translate(self::DEL_BUTTON));
 
         // Is this the initial display or the callback with confirmation?
         if ( $this->_thisIsInitialDisplay() )
@@ -796,18 +842,18 @@ class TableController extends Zend_Controller_Action
             $this->_acquireLock($setTable, $this->_fieldsToMatch);
             $form->populate($setTable->getTableEntry($this->_fieldsToMatch));
         }
-        elseif ( $this->_submittedButton == self::CANCEL )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::CANCEL) )
         {
             $this->_releaseLock($setTable, $this->_fieldsToMatch);
             $this->_goTo('record-view', $this->_fieldsToMatch);
         }
         else        // Delete has been confirmed.
         {
-            // Process the posted delete confirmation information. 
+            // Process the posted delete confirmation information.
             $formData = $this->getRequest()->getPost();
             if ( $form->isValid($formData) )
             {
-                // Get the lock information, including the key on which 
+                // Get the lock information, including the key on which
                 // the record was locked BEFORE deleting record!
                 $lockInfo = $this->_getLockInfo($setTable,
                                                 $this->_fieldsToMatch);
@@ -853,7 +899,7 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Builds an error message if there are fields specified in the 
+     * Builds an error message if there are fields specified in the
      * table setting that do not exist in the database.
      *
      * @param Ramp_Table_SetTable  table: setting & db info
@@ -878,28 +924,31 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Creates a form with the given parameters.  (Abstracted into a 
+     * Creates a form with the given parameters.  (Abstracted into a
      * method so that it can be redefined in subclasses.)
      *
      * @param Ramp_Table_TableSetting $setTable the table setting
-     * @param string $formType     specifies type of form (VIEW, ADD, 
+     * @param string $formType     specifies type of form (VIEW, ADD,
      *                                  EDIT, or SEARCH)
      * @param string $makeSmall    make buttons smaller
      * @param bool   $formSuffix   a suffix to make form name unique on page
      *                             e.g., a row number
      */
     protected function _getForm(Ramp_Table_SetTable $setTable,
-                                $formType = self::VIEW, $makeSmall = false,
+                                $formType = null, $makeSmall = false,
                                 $formSuffix = null)
     {
+        if (is_null($formType)) {
+            $formType = $this->adapter->translate(self::VIEW);
+        }
         return new Ramp_Form_Table_TableRecordEntry($setTable, $formType,
                                                     $makeSmall, $formSuffix);
     }
 
     /**
-     * Returns true if the current request represents the initial 
-     * display for the current action.  A return of false, therefore, 
-     * indicates that the current request represents the callback with 
+     * Returns true if the current request represents the initial
+     * display for the current action.  A return of false, therefore,
+     * indicates that the current request represents the callback with
      * fields to add, modify, or search filled in.
      */
     protected function _thisIsInitialDisplay()
@@ -908,29 +957,29 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Checks whether this is a callback that would lead to the ability 
+     * Checks whether this is a callback that would lead to the ability
      * to set or modify encrypted passwords in the RAMP Users table.
      * Generates an error message if this is such an illegal callback.
      * (Should only be an issue when doing internal authentication, but
      * the consequences are so severe that we should always check.)
      *
-     * Pre-condition: should only be called on button callbacks, i.e., 
+     * Pre-condition: should only be called on button callbacks, i.e.,
      *    when $this->_thisIsInitialDisplay() is false.
      *
      * @return true if button action would go to an ADD or EDIT form and
-     *              the setting potentially allows corruption of encrypted 
+     *              the setting potentially allows corruption of encrypted
      *              passwords in the Users table; false otherwise
      */
     protected function _illegalCallback($setTable)
     {
         // Get the appropriate table setting based on the button action.
-        if ( $this->_submittedButton == $this->ADD ||
-             $this->_submittedButton == self::CLONE_BUTTON ||
+        if ( $this->_submittedButton == $this->adapter->translate(self::ADD) ||
+             $this->_submittedButton == $this->adapter->translate(self::CLONE_BUTTON) ||
              $this->_blockAdd($this->_submittedButton) )
         {
             $setTable = $this->_tblViewingSeq->getSetTableForAdding();
         }
-        elseif ( $this->_submittedButton == self::EDIT )
+        elseif ( $this->_submittedButton == $this->adapter->translate(self::EDIT) )
         {
             $setTable = $this->_tblViewingSeq->getSetTableForModifying();
         }
@@ -940,7 +989,7 @@ class TableController extends Zend_Controller_Action
             return false;
         }
 
-        // Does this table setting allow modification of password field 
+        // Does this table setting allow modification of password field
         // in RAMP Users table?  (Is password field visible in setting?)
         if ( $setTable->getDbTableName() == self::USERS_TABLE &&
              $setTable->getFieldObject(self::PASSWORD)->isVisible() )
@@ -958,24 +1007,24 @@ class TableController extends Zend_Controller_Action
     /**
      * Create the set of buttons for a list, tablular, or split view.
      *
-     * @param $self_view  indicates which view is asking for the button list
+     * @param self_view  indicates which view is asking for the button list
      * @param $setTable   the current table setting
      */
     protected function _multiRecordButtonSet($self_view, $setTable)
     {
         $buttonList = array();
-        $buttonList[] = $this->ADD;
+        $buttonList[] = $this->adapter->translate(self::ADD);
         if ( $setTable->supportsBlockEntry() )
             {   $buttonList[] = $this->_makeBlockEntryButton($setTable);    }
         if ( $setTable->supportsBlockEdit() )
-            {   $buttonList[] = self::BLOCK_EDIT_LABEL;    }
-        if ( $self_view != self::LIST_VIEW )
-            {   $buttonList[] = self::LIST_VIEW; }
-        if ( $self_view != self::TABLE )
-            {   $buttonList[] = self::TABLE; }
-        if ( $self_view != self::SPLIT_VIEW )
-            {   $buttonList[] = self::SPLIT_VIEW; }
-        $buttonList[] = self::SEARCH;
+            {   $buttonList[] = $this->adapter->translate(self::BLOCK_EDIT_LABEL);    }
+        if ( $self_view != $this->adapter->translate(self::LIST_VIEW) )
+            {   $buttonList[] = $this->adapter->translate(self::LIST_VIEW); }
+        if ( $self_view != $this->adapter->translate(self::TABLE) )
+            {   $buttonList[] = $this->adapter->translate(self::TABLE); }
+        if ( $self_view != $this->adapter->translate(self::SPLIT_VIEW) )
+            {   $buttonList[] = $this->adapter->translate(self::SPLIT_VIEW); }
+        $buttonList[] = $this->adapter->translate(self::SEARCH);
         return $buttonList;
     }
 
@@ -984,8 +1033,8 @@ class TableController extends Zend_Controller_Action
      */
     protected function _makeBlockEntryButton($setTable)
     {
-        return self::BLOCK_ENTRY_PREFIX .  $setTable->getBlockEntryLabel() .
-               self::BLOCK_ENTRY_SUFFIX;
+        return $this->adapter->translate(self::BLOCK_ENTRY_PREFIX) .  $setTable->getBlockEntryLabel() .
+               $this->adapter->translate(self::BLOCK_ENTRY_SUFFIX);
     }
 
     /**
@@ -1005,20 +1054,20 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Defines basic display parameters, not including the buttonList 
+     * Defines basic display parameters, not including the buttonList
      * nor the data to display.
      */
     protected function _multiRecordInitDisplayWithoutData($setTable)
     {
         $this->_initViewTableInfo($setTable);
 
-        /*  This does not make sense for large data sets.  Can display 
+        /*  This does not make sense for large data sets.  Can display
          *  all by doing a search and not filling in any fields.
         // Let view renderer know whether this is a subset of the table.
         $this->view->displayingSubset = ! empty($this->_fieldsToMatch);
         if ( $this->view->displayingSubset )
         {
-            $this->view->buttonList[] = self::DISPLAY_ALL;
+            $this->view->buttonList[] = $this->adapter->translate(self::DISPLAY_ALL);
         }
          */
 
@@ -1028,18 +1077,21 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Get two views of the data, one of which has only the fields that 
-     * have the same value for all rows (the other fields are there, but 
-     * hidden), and one of which has only the fields whose values are 
+     * Get two views of the data, one of which has only the fields that
+     * have the same value for all rows (the other fields are there, but
+     * hidden), and one of which has only the fields whose values are
      * different across rows (the shared fields are there, but hidden).
      */
     protected function _getSplitData($setTable, $fullDataSet)
     {
         $firstRow = $fullDataSet[0];
 
-        // Determine which fields go in "same" array, and which go in 
+        // Determine which fields go in "same" array, and which go in
         // "different".  (Empty fields are not considered "same".)
-        $data = array(self::SAME => array(), self::DIFFERENT => array());
+        $data = array(
+            self::SAME => array(),
+            self::DIFFERENT => array()
+        );
         $allVisibleFields = $setTable->getVisibleFields();
         foreach ( $allVisibleFields as $fieldName => $field )
         {
@@ -1058,7 +1110,7 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Determines whether all rows have matching data for the given 
+     * Determines whether all rows have matching data for the given
      * field.
      */
     protected function _allRowsMatch($allData, $fieldName)
@@ -1078,25 +1130,25 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Creates a shared view for a split screen or block add, and 
+     * Creates a shared view for a split screen or block add, and
      * returns the table setting created for the shared view.
      */
     protected function _createSharedView($origSetTable, $sharedData,
                                          $differentFields)
     {
-        // Get settings for shared and entry data (needed for initial 
+        // Get settings for shared and entry data (needed for initial
         // display and callbacks).
         $sharedViewSetting = $this->view->sharedViewSetting =
             $origSetTable->createSubsetWithout(array_keys($differentFields));
         $this->view->sharedDataEntryForm = $this->_getForm($sharedViewSetting,
-                                                           self::VIEW, true);
+                                                           $this->adapter->translate(self::VIEW), true);
         $this->view->sharedDataEntryForm->populate($sharedData);
 
         return $sharedViewSetting;
     }
 
     /**
-     * Creates a "different" (or summary) view of the data values that 
+     * Creates a "different" (or summary) view of the data values that
      * vary for the records being displayed in a split screen, block
      * add, or block edit; returns the table setting created for the new view.
      */
@@ -1111,14 +1163,14 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Block Add: Checks that all required fields (other than the block 
+     * Block Add: Checks that all required fields (other than the block
      * entry field) have shared values.
      */
     protected function _allRequiredFieldsOK($origSetTable, $sharedData,
                                             $blockEntryField)
     {
         // If the setting has any required fields (other than the block
-        // entry field) that are not already populated, that is a 
+        // entry field) that are not already populated, that is a
         // fatal error.
         $badFields = "";
         $delim = "";
@@ -1142,13 +1194,15 @@ class TableController extends Zend_Controller_Action
     protected function _getButtonAction($buttonLabel)
     {
         $commonMapping = array(
-            self::SEARCH => 'search',
-            self::DISPLAY_ALL => $this->_displayAllView,
-            self::LIST_VIEW => $this->_displayAllView,
-            self::TABLE => 'table-view', self::SPLIT_VIEW => 'split-view',
-            $this->ADD => 'add', self::EDIT => 'record-edit',
-            self::BLOCK_EDIT_LABEL => 'block-edit',
-            self::DEL_BUTTON => 'delete');
+            $this->adapter->translate(self::SEARCH)           => 'search',
+            $this->adapter->translate(self::DISPLAY_ALL)      => $this->_displayAllView,
+            $this->adapter->translate(self::LIST_VIEW)        => $this->_displayAllView,
+            $this->adapter->translate(self::TABLE)            => 'table-view',
+            $this->adapter->translate(self::SPLIT_VIEW)       => 'split-view',
+            $this->adapter->translate(self::ADD)              => 'add',
+            $this->adapter->translate(self::EDIT)             => 'record-edit',
+            $this->adapter->translate(self::BLOCK_EDIT_LABEL) => 'block-edit',
+            $this->adapter->translate(self::DEL_BUTTON)       => 'delete');
 
         return isset($commonMapping[$buttonLabel])
                     ? $commonMapping[$buttonLabel]
@@ -1157,12 +1211,12 @@ class TableController extends Zend_Controller_Action
 
     protected function _blockAdd($buttonLabel)
     {
-        return strpos($buttonLabel, self::BLOCK_ENTRY_SUFFIX) !== false;
+        return strpos($buttonLabel, $this->adapter->translate(self::BLOCK_ENTRY_SUFFIX)) !== false;
     }
 
     /**
      * Gets the user data from request parameters as name=>value pairs
-     * to use in database queries and stores it in 
+     * to use in database queries and stores it in
      * $this->_fieldsToMatch.
      */
     protected function _getFieldsToMatch()
@@ -1170,15 +1224,15 @@ class TableController extends Zend_Controller_Action
         $request = $this->getRequest();
 
         // Remove Zend and Ramp keyword parameters.
-        $paramsToRemove = array( 
-                                'controller' => null,
-                                'action' => null,
-                                'module' => null,
-                                self::SETTING_NAME => null,
-                                self::SUBMIT_BUTTON => null,
-                                self::SEARCH_TYPE => null,
-                                // self::BLOCK_ENTRY_CHOICE => null,
-                            );
+        $paramsToRemove = array(
+            'controller' => null,
+            'action' => null,
+            'module' => null,
+            self::SETTING_NAME => null,
+            self::SUBMIT_BUTTON => null,
+            self::SEARCH_TYPE => null,
+            // self::BLOCK_ENTRY_CHOICE => null,
+        );
 
         // Return an array that does not include those parameters.
         $this->_fieldsToMatch = array();
@@ -1197,7 +1251,7 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Redirects the action, passing whatever parameters are 
+     * Redirects the action, passing whatever parameters are
      * appropriate.
      *
      * @param string $nextAction     the name of the next action
@@ -1238,12 +1292,12 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Filters out fields for which no values were provided (unless the 
+     * Filters out fields for which no values were provided (unless the
      * field has a unary comparator and doesn't need a value).
      *
      * @param array $data   Column-value pairs
      * @param $comparators  Column/comparator pairs of search comparators
-     * @return array        Column-value pairs, with no empty values 
+     * @return array        Column-value pairs, with no empty values
      *                      (unless they are significant for a search)
      */
     protected function _getFilledFields(array $data, $comparators = array())
@@ -1266,8 +1320,8 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Determines whether a field is significant, despite not having a 
-     * value,  because it is tied to a unary comparator which does not 
+     * Determines whether a field is significant, despite not having a
+     * value,  because it is tied to a unary comparator which does not
      * need a value.
      */
     protected function _isUnaryComparator($field, $comparators)
@@ -1288,7 +1342,7 @@ class TableController extends Zend_Controller_Action
         $storedSourceRecs = array();
         $initializedData = $data;
 
-        // Loop through fields in this table to see if any should be 
+        // Loop through fields in this table to see if any should be
         // initialized from values in another table.
         $relevantFields = $setTable->getExternallyInitFields();
         foreach ( $relevantFields as $newFieldName => $newField )
@@ -1332,7 +1386,7 @@ class TableController extends Zend_Controller_Action
         $initRef = $setTable->getInitRefInfo($sourceTblName);
         if ( $initRef == null )
         {
-            $this->view->errMsgs[] = 
+            $this->view->errMsgs[] =
                 "Cannot initialize fields from $sourceTblName -- " .
                 "no 'initTableRef` information provided.";
             return null;
@@ -1342,7 +1396,7 @@ class TableController extends Zend_Controller_Action
         $matches = $sourceTbl->getTableEntries($searchKeys);
         if ( count($matches) != 1 )
         {
-            // Cannot initialize with info provided; proceed 
+            // Cannot initialize with info provided; proceed
             // directly to next field.
             $this->view->errMsgs[] =
                 "Cannot initialize fields from $sourceTblName -- " .
@@ -1385,7 +1439,7 @@ class TableController extends Zend_Controller_Action
 
     /**
      * Releases the lock for the given record in the specified table.
-     * Uses the $setTable and $matchingFields parameters to determine 
+     * Uses the $setTable and $matchingFields parameters to determine
      * the lock information unless the optional $lockInfo parameter is
      * provided.
      *
@@ -1409,8 +1463,8 @@ class TableController extends Zend_Controller_Action
     }
 
     /**
-     * Gets the lock information for the lock to acquire or release 
-     * based on the given set table, the matching fields, and the Lock 
+     * Gets the lock information for the lock to acquire or release
+     * based on the given set table, the matching fields, and the Lock
      * Relations table.
      *
      * @param Ramp_Table_SetTable $setTable    setting & db info
